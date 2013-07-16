@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script type="text/javascript" src="http://minodisk.github.io/colorful-js/lib/browser/colorful.js"></script>
+<script type="text/javascript">
+"use strict";
+
+var GLOWING_FRAME_COUNT = 30;
+
+/**
+	takes the DOM image representing a lantern and return an 30-length array of imagedata containing a lantern glowing in a cosine wave.
+*/
+var GLOW_COLOR = new mn.dsk.HSV(35, 1, 1);
+
+var lanternImage, lanternFrames;
+var lanternFrame = 0;
+var mainCanvas, mainCtx;
+var totalFrames = 0;
+function generateLanternGlowFrames(origImage) {
+	//overlay glowing bits on the lantern
+	var glowFrames = new Array(GLOWING_FRAME_COUNT);
+	var tempCanvas = generateTempCanvas(origImage.width, origImage.height);
+	var tempCtx = tempCanvas.getContext("2d");
+	for (var i = 0; i < GLOWING_FRAME_COUNT; i++) {
+		tempCtx.clearRect(0, 0, origImage.width, origImage.height);
+		tempCtx.drawImage(origImage, 0, 0);
+		var brightness = Math.sin((i / GLOWING_FRAME_COUNT) * Math.PI); // 0 -> pi
+		var glowHue = GLOW_COLOR.h + (brightness * 25);
+		var glowSat = GLOW_COLOR.s - (brightness * 0.5);
+		var glowAlpha = (brightness * 0.6) + 0.4;
+		var darkenAlpha = (1 - brightness) * 0.2;
+		var newGlowColor = new mn.dsk.HSV(glowHue, glowSat, GLOW_COLOR.v);
+		var glowRGB = mn.dsk.RGB(newGlowColor);
+		/*tempCtx.shadowColor = glowRGB.toCSSString();
+		tempCtx.shadowBlur = 100;
+		tempCtx.shadowOffsetX = 0;
+		tempCtx.shadowOffsetY = 0;
+		tempCtx.fillStyle = "rgba(" + glowRGB.r + "," + glowRGB.g + "," + glowRGB.b + "," + glowAlpha + ")";*/
+
+		tempCtx.fillStyle = "rgba(0, 0, 0, " + darkenAlpha + ")";
+		tempCtx.fillRect(0, 0, origImage.width, origImage.height);
+
+		var glowCenterX = origImage.height - Math.floor(origImage.width / 2)
+		var gradColor = tempCtx.createRadialGradient(Math.floor(origImage.width / 2), glowCenterX, 0,
+			 Math.floor(origImage.width / 2), glowCenterX,  Math.floor(origImage.width / 2));
+		gradColor.addColorStop(0, "rgba(" + glowRGB.r + "," + glowRGB.g + "," + glowRGB.b + "," + glowAlpha + ")");
+		//gradColor.addColorStop(0.4, "rgba(" + glowRGB.r + "," + glowRGB.g + "," + glowRGB.b + "," + (glowAlpha * 0.9) + ")");
+		gradColor.addColorStop(0.6, "rgba(" + glowRGB.r + "," + glowRGB.g + "," + glowRGB.b + "," + (glowAlpha * 0.7) + ")");
+		gradColor.addColorStop(0.8, "rgba(" + glowRGB.r + "," + glowRGB.g + "," + glowRGB.b + "," + (glowAlpha * 0.4) + ")");
+		gradColor.addColorStop(1, "rgba(" + glowRGB.r + "," + glowRGB.g + "," + glowRGB.b + "," + (glowAlpha * 0) + ")");
+		tempCtx.fillStyle = gradColor;
+		/*tempCtx.beginPath();
+		tempCtx.arc(Math.floor(origImage.width / 2), Math.floor(origImage.height / 2), Math.floor(origImage.width / 2), 0, Math.PI * 2, true);
+		tempCtx.fill();*/
+		tempCtx.fillRect(0, 0, origImage.width, origImage.height);
+		var imgData = tempCtx.getImageData(0, 0, origImage.width, origImage.height);
+		glowFrames[i] = imgData;
+	}
+	return glowFrames;
+}
+
+function generateTempCanvas(width, height) {
+	var m_canvas = document.createElement('canvas');
+	m_canvas.width = width;
+	m_canvas.height = height;
+	return m_canvas;
+}
+
+function loadHandler() {
+	lanternImage = document.getElementById("lanternimage");
+	lanternFrames = generateLanternGlowFrames(lanternImage);
+	mainCanvas = document.getElementById("maincanvas");
+	mainCtx = mainCanvas.getContext("2d");
+	setInterval(renderFrame, 20);
+}
+
+function renderFrame() {
+	mainCtx.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
+	mainCtx.putImageData(lanternFrames[lanternFrame], 0, Math.sin((totalFrames / 100) * Math.PI * 2) * 30);
+	if (totalFrames % 10 == 0) {
+		lanternFrame = (lanternFrame + 1) % GLOWING_FRAME_COUNT;
+	}
+	totalFrames++;
+}
+window.onload = loadHandler;
+
+</script>
+</head>
+<body style="background-color:black">
+<img src="lantern.png" id="lanternimage" alt="" style="display:none">
+<canvas width="800" height="600" id="maincanvas">
+</canvas>
+</body>
+</html>
