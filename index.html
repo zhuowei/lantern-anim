@@ -76,7 +76,7 @@ var lanternOffsets = [0, -23, 54, 34, -12, -45, 43, -23];
 function renderFrame() {
 	mainCtx.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
 	for (var i = 0; i < 7; i++) {
-		mainCtx.drawImage(lanternFrames[(lanternFrame + i) % GLOWING_FRAME_COUNT], i * 100, Math.sin(((totalFrames + (i*3)) / 100) * Math.PI * 2) * 30 + lanternOffsets[i]);
+		mainCtx.drawImage(lanternFrames[(lanternFrame + i) % GLOWING_FRAME_COUNT], i * 100, Math.sin(((totalFrames + (i*5)) / 100) * Math.PI * 2) * 30 + lanternOffsets[i] + 70);
 	}
 	if (totalFrames % 5 == 0) {
 		lanternFrame = (lanternFrame + 1) % GLOWING_FRAME_COUNT;
