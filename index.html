@@ -7,28 +7,28 @@
 
 var GLOWING_FRAME_COUNT = 30;
 
-/**
-	takes the DOM image representing a lantern and return an 30-length array of imagedata containing a lantern glowing in a cosine wave.
-*/
 var GLOW_COLOR = new mn.dsk.HSV(35, 1, 1);
 
 var lanternImage, lanternFrames;
 var lanternFrame = 0;
 var mainCanvas, mainCtx;
 var totalFrames = 0;
+/**
+	takes the DOM image representing a lantern and return an 30-length array of canvas containing a lantern glowing in a cosine wave.
+*/
 function generateLanternGlowFrames(origImage) {
 	//overlay glowing bits on the lantern
 	var glowFrames = new Array(GLOWING_FRAME_COUNT);
-	var tempCanvas = generateTempCanvas(origImage.width, origImage.height);
-	var tempCtx = tempCanvas.getContext("2d");
 	for (var i = 0; i < GLOWING_FRAME_COUNT; i++) {
+		var tempCanvas = generateTempCanvas(origImage.width, origImage.height);
+		var tempCtx = tempCanvas.getContext("2d");
 		tempCtx.clearRect(0, 0, origImage.width, origImage.height);
 		tempCtx.drawImage(origImage, 0, 0);
 		var brightness = Math.sin((i / GLOWING_FRAME_COUNT) * Math.PI); // 0 -> pi
 		var glowHue = GLOW_COLOR.h + (brightness * 25);
 		var glowSat = GLOW_COLOR.s - (brightness * 0.5);
 		var glowAlpha = (brightness * 0.6) + 0.4;
-		var darkenAlpha = (1 - brightness) * 0.2;
+		var darkenAlpha = (1 - brightness) * 0.3;
 		var newGlowColor = new mn.dsk.HSV(glowHue, glowSat, GLOW_COLOR.v);
 		var glowRGB = mn.dsk.RGB(newGlowColor);
 		/*tempCtx.shadowColor = glowRGB.toCSSString();
@@ -38,7 +38,7 @@ function generateLanternGlowFrames(origImage) {
 		tempCtx.fillStyle = "rgba(" + glowRGB.r + "," + glowRGB.g + "," + glowRGB.b + "," + glowAlpha + ")";*/
 
 		tempCtx.fillStyle = "rgba(0, 0, 0, " + darkenAlpha + ")";
-		tempCtx.fillRect(0, 0, origImage.width, origImage.height);
+		//tempCtx.fillRect(0, 0, origImage.width, origImage.height);
 
 		var glowCenterX = origImage.height - Math.floor(origImage.width / 2)
 		var gradColor = tempCtx.createRadialGradient(Math.floor(origImage.width / 2), glowCenterX, 0,
@@ -53,8 +53,7 @@ function generateLanternGlowFrames(origImage) {
 		tempCtx.arc(Math.floor(origImage.width / 2), Math.floor(origImage.height / 2), Math.floor(origImage.width / 2), 0, Math.PI * 2, true);
 		tempCtx.fill();*/
 		tempCtx.fillRect(0, 0, origImage.width, origImage.height);
-		var imgData = tempCtx.getImageData(0, 0, origImage.width, origImage.height);
-		glowFrames[i] = imgData;
+		glowFrames[i] = tempCanvas;
 	}
 	return glowFrames;
 }
@@ -71,13 +70,15 @@ function loadHandler() {
 	lanternFrames = generateLanternGlowFrames(lanternImage);
 	mainCanvas = document.getElementById("maincanvas");
 	mainCtx = mainCanvas.getContext("2d");
-	setInterval(renderFrame, 20);
+	setInterval(renderFrame, 50);
 }
-
+var lanternOffsets = [0, -23, 54, 34, -12, -45, 43, -23];
 function renderFrame() {
 	mainCtx.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
-	mainCtx.putImageData(lanternFrames[lanternFrame], 0, Math.sin((totalFrames / 100) * Math.PI * 2) * 30);
-	if (totalFrames % 10 == 0) {
+	for (var i = 0; i < 7; i++) {
+		mainCtx.drawImage(lanternFrames[(lanternFrame + i) % GLOWING_FRAME_COUNT], i * 100, Math.sin(((totalFrames + (i*3)) / 100) * Math.PI * 2) * 30 + lanternOffsets[i]);
+	}
+	if (totalFrames % 5 == 0) {
 		lanternFrame = (lanternFrame + 1) % GLOWING_FRAME_COUNT;
 	}
 	totalFrames++;
