@@ -13,6 +13,8 @@ var lanternImage, lanternFrames;
 var lanternFrame = 0;
 var mainCanvas, mainCtx;
 var totalFrames = 0;
+var lanternBlurFrames = new Array(GLOWING_FRAME_COUNT);
+var lanternBlurFrames2 = new Array(GLOWING_FRAME_COUNT);
 /**
 	takes the DOM image representing a lantern and return an 30-length array of canvas containing a lantern glowing in a cosine wave.
 */
@@ -54,6 +56,15 @@ function generateLanternGlowFrames(origImage) {
 		tempCtx.fill();*/
 		tempCtx.fillRect(0, 0, origImage.width, origImage.height);
 		glowFrames[i] = tempCanvas;
+		var blurCanvas = generateTempCanvas(origImage.width / 8, origImage.height / 8);
+		var blurCtx = blurCanvas.getContext("2d");
+		blurCtx.drawImage(tempCanvas, 0, 0, tempCanvas.width, tempCanvas.height, 0, 0, blurCanvas.width, blurCanvas.height);
+		lanternBlurFrames[i] = blurCanvas;
+		var blur2Canvas = generateTempCanvas(origImage.width / 16, origImage.height / 16);
+		var blur2Ctx = blur2Canvas.getContext("2d");
+		blur2Ctx.drawImage(blurCanvas, 0, 0, blurCanvas.width, blurCanvas.height, 0, 0, blur2Canvas.width, blur2Canvas.height);
+		lanternBlurFrames2[i] = blur2Canvas;
+		
 	}
 	return glowFrames;
 }
@@ -73,8 +84,21 @@ function loadHandler() {
 	setInterval(renderFrame, 50);
 }
 var lanternOffsets = [0, -23, 54, 34, -12, -45, 43, -23];
+var lanternOffsets2 = [23, 5, -21, -45, 11, -23, -4, 43, -23, 6, 4, -23, 54, 3, -23, 43, 3,4, -67, 82, -34, -24, -1, 3, 34, -34];
 function renderFrame() {
 	mainCtx.clearRect(0, 0, mainCanvas.width, mainCanvas.height);
+	for (var i = 0; i < lanternOffsets2.length; i++) {
+		var frameImg = lanternBlurFrames2[(lanternFrame + i) % GLOWING_FRAME_COUNT];
+		mainCtx.drawImage(frameImg, 
+			0, 0, frameImg.width, frameImg.height,
+			30 + i * 25, Math.sin(((totalFrames + ((i)*5)) / 100) * Math.PI * 2) * 10 + lanternOffsets2[i] + 400, lanternImage.width / 4, lanternImage.height / 4);
+	}
+	for (var i = 0; i < 14; i++) {
+		var frameImg = lanternBlurFrames[(lanternFrame + i) % GLOWING_FRAME_COUNT];
+		mainCtx.drawImage(frameImg, 
+			0, 0, frameImg.width, frameImg.height,
+			i * 50, Math.sin(((totalFrames + ((14-i)*5)) / 100) * Math.PI * 2) * 15 + lanternOffsets2[i] + 260, lanternImage.width / 2, lanternImage.height / 2);
+	}
 	for (var i = 0; i < 7; i++) {
 		mainCtx.drawImage(lanternFrames[(lanternFrame + i) % GLOWING_FRAME_COUNT], i * 100, Math.sin(((totalFrames + (i*5)) / 100) * Math.PI * 2) * 30 + lanternOffsets[i] + 70);
 	}
